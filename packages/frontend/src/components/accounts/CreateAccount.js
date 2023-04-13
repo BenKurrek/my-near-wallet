@@ -132,7 +132,10 @@ class CreateAccount extends Component {
         const { fundingContract, fundingKey, checkNearDropBalance } = this.props;
         await Mixpanel.withTracking('CA Check near drop balance',
             async () => {
-                const fundingAmount = await checkNearDropBalance(fundingContract, fundingKey);
+                const keyInfo = await checkNearDropBalance(fundingContract, fundingKey);
+                console.log('keyInfo: ', keyInfo);
+                const fundingAmount = keyInfo?.yoctoNEAR || '0';
+                console.log('fundingAmount: ', fundingAmount);
                 this.setState({ fundingAmount });
             },
             () => this.setState({ invalidNearDrop: true })
@@ -149,6 +152,14 @@ class CreateAccount extends Component {
 
     handleCreateAccount = async () => {
         const { accountId, fundingAmount } = this.state;
+        console.log('this.state create account: ', this.state);
+        console.log('this.props create account: ', this.props);
+        
+        console.log('fundingAmount: ', fundingAmount);
+        console.log('accountId: ', accountId);
+        console.log('fundingContract: ', fundingContract);
+        console.log('fundingKey: ', fundingKey);
+        console.log('fundingAccountId: ', fundingAccountId);
         const {
             fundingContract, fundingKey,
             fundingAccountId,
@@ -160,6 +171,9 @@ class CreateAccount extends Component {
         if (fundingAccountId || fundingContract) {
             const fundingOptions = fundingAccountId ? { fundingAccountId } : { fundingContract, fundingKey, fundingAmount };
             queryString = `?fundingOptions=${encodeURIComponent(JSON.stringify(fundingOptions))}`;
+            
+            console.log('fundingOptions: ', fundingOptions);
+            console.log('queryString: ', queryString);
         }
         Mixpanel.track('CA Click create account button');
         this.props.history.push(`/set-recovery/${accountId}${queryString}`);

@@ -233,7 +233,11 @@ export default class Wallet {
     }
 
     save() {
+        console.log(`KEY_ACTIVE_ACCOUNT_ID: ${JSON.stringify(KEY_ACTIVE_ACCOUNT_ID)}`)
+        console.log(`this.accountId: ${JSON.stringify(this.accountId)}`)
         localStorage.setItem(KEY_ACTIVE_ACCOUNT_ID, this.accountId);
+        console.log(`KEY_WALLET_ACCOUNTS: ${JSON.stringify(KEY_WALLET_ACCOUNTS)}`)
+        console.log(`this.accounts: ${JSON.stringify(this.accounts)}`)
         localStorage.setItem(KEY_WALLET_ACCOUNTS, JSON.stringify(this.accounts));
     }
 
@@ -588,16 +592,29 @@ export default class Wallet {
     }
 
     async checkNearDropBalance(fundingContract, fundingKey) {
+        console.log('fundingKey: ', fundingKey)
+        console.log('fundingContract: ', fundingContract)
         const account = await this.getAccount(fundingContract);
 
         const contract = new nearApiJs.Contract(account, fundingContract, {
-            viewMethods: ['get_key_balance'],
+            viewMethods: ['get_key_balance', 'get_key_information'],
             sender: fundingContract
         });
 
         const key = nearApiJs.KeyPair.fromString(fundingKey).publicKey.toString();
 
-        return await contract.get_key_balance({ key });
+
+        let keyInfo = {}
+        try {
+            keyInfo = await contract.get_key_information({ key });
+            console.log('keyInfo: ', keyInfo)
+        } catch (e) {
+            console.log('e: ', e)
+            let balance = await contract.get_key_balance({ key });
+            keyInfo.yoctoNEAR = balance;   
+        }
+        
+        return keyInfo;
     }
 
     async createNewAccountLinkdrop(accountId, fundingContract, fundingKey, publicKey) {
@@ -615,7 +632,7 @@ export default class Wallet {
 
         await contract.create_account_and_claim({
             new_account_id: accountId,
-            new_public_key: publicKey.toString().replace('ed25519:', '')
+            new_public_key: publicKey.toString()//.replace('ed25519:', '')
         }, CONFIG.LINKDROP_GAS);
     }
 
@@ -642,27 +659,45 @@ export default class Wallet {
     }
 
     async saveAccount(accountId, keyPair) {
+        console.log('saveAccount')
+        console.log('accountId: ', accountId)
+        console.log('keyPair: ', keyPair)
+        console.log('this.accounts before get accounts LS: ', this.accounts)
         this.getAccountsLocalStorage();
+        console.log('this.accounts after get accounts LS: ', this.accounts)
         await this.setKey(accountId, keyPair);
+        console.log('this.accounts after set key: ', this.accounts)
         this.accounts[accountId] = true;
+        console.log('this.accounts after set account: ', this.accounts)
 
         // TODO: figure out better way to inject reducer
+        console.log("store before: ", store)
         store.addAccountReducer();
+        console.log("store after: ", store)
     }
 
     makeAccountActive(accountId) {
+        console.log('this.accounts in make account active: ', this.accounts)
+        console.log(`accountId: ${JSON.stringify(accountId)}`)
         if (!(accountId in this.accounts)) {
+            console.log(`false: ${JSON.stringify(false)}`)
             return false;
         }
+        console.log(`this.accountId: ${JSON.stringify(this.accountId)}`)
         this.accountId = accountId;
+        console.log(`this.accountId: ${JSON.stringify(this.accountId)}`)
         this.save();
     }
 
     async saveAndMakeAccountActive(accountId, keyPair) {
+        console.log('saveAndMakeAccountActive: ')
+        console.log('accountId: ', accountId)
+        console.log('keyPair: ', keyPair)
         await this.saveAccount(accountId, keyPair);
         this.makeAccountActive(accountId);
         // TODO: What does setAccountConfirmed do?
         setAccountConfirmed(this.accountId, false);
+        console.log('this.accountId end of save and make active: ', this.accountId)
     }
 
     async importZeroBalanceAccount(accountId, keyPair) {
@@ -682,6 +717,14 @@ export default class Wallet {
      ********************************/
     // TODO: Why is fullAccess needed? Everything without contractId should be full access.
     async addAccessKey(accountId, contractId, publicKey, fullAccess = false, methodNames = '', recoveryKeyIsFAK) {
+        console.log('addAccessKey')
+        console.log('accountId: ', accountId)
+        console.log('contractId: ', contractId)
+        console.log('publicKey: ', publicKey)
+        console.log('fullAccess: ', fullAccess)
+        console.log('methodNames: ', methodNames)
+        console.log('recoveryKeyIsFAK: ', recoveryKeyIsFAK)
+
         const account = recoveryKeyIsFAK ?
             new nearApiJs.Account(this.connection, accountId) :
             await this.getAccount(accountId);
@@ -947,6 +990,9 @@ export default class Wallet {
     }
 
     async signatureFor(account) {
+        console.log('signatureFor: ')
+        console.log('account: ', account)
+
         const { accountId } = account;
         const block = await account.connection.provider.block({
             finality: 'final'
@@ -963,6 +1009,10 @@ export default class Wallet {
     }
 
     async postSignedJson(path, options) {
+        console.log('postSignedJson: ', postSignedJson)
+        console.log(`path: ${JSON.stringify(path)}`)
+        console.log('options: ', options)
+        console.log('this: ', this)
         return await sendJson('POST', CONFIG.ACCOUNT_HELPER_URL + path, {
             ...options,
             ...(await this.signatureFor(this))

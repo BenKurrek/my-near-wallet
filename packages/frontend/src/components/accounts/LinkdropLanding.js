@@ -26,7 +26,7 @@ const StyledContainer = styled(Container)`
     align-items: center;
     text-align: center;
 
-    .near-balance {
+    .near-keyInfo {
         color: #0072CE;
         font-weight: 600;
         border: 1px solid #D6EDFF;
@@ -70,14 +70,26 @@ const StyledContainer = styled(Container)`
     }
 `;
 
+export const DROP_TYPES = {
+    NEAR: 'near',
+    NFT: 'nft',
+    FT: 'ft',
+    TRIAL: 'trial'
+}
+
 class LinkdropLanding extends Component {
     state = {
-        balance: null,
-        invalidNearDrop: null
+        keyInfo: null,
+        invalidLinkdrop: null,
+        fundingAmount: null,
+        accountId: null
     }
 
     componentDidMount() {
+        console.log('this.props: ', this.props)
         const { fundingContract, fundingKey, handleRefreshUrl } = this.props;
+        console.log('fundingContract: ', fundingContract)
+        console.log('fundingKey: ', fundingKey)
         if (fundingContract && fundingKey) {
             this.handleCheckNearDropBalance();
             handleRefreshUrl();
@@ -85,14 +97,28 @@ class LinkdropLanding extends Component {
     }
 
     handleCheckNearDropBalance = async () => {
+        console.log('this.props: ', this.props)
         const { fundingContract, fundingKey, checkNearDropBalance } = this.props;
-        await Mixpanel.withTracking('CA Check near drop balance',
+        await Mixpanel.withTracking('CA Check near drop keyInfo',
             async () => {
-                const balance = await checkNearDropBalance(fundingContract, fundingKey);
+                console.log('fundingContract: ', fundingContract)
+                console.log('fundingKey: ', fundingKey)
+                const returnedKeyInfo = await checkNearDropBalance(fundingContract, fundingKey);
+                console.log('returnedKeyInfo: ', returnedKeyInfo)
 
-                this.setState({ balance });
+                let actualInfo = {
+                    required_gas: '100000000000000',
+                    yoctoNEAR: '0',
+                    trial_data: {
+                        exit: true
+                    }
+                }
+
+                this.setState({
+                    keyInfo: actualInfo
+                })
             },
-            () => this.setState({ invalidNearDrop: true })
+            () => this.setState({ invalidLinkdrop: true })
         );
     }
 
@@ -102,17 +128,35 @@ class LinkdropLanding extends Component {
         if (url?.redirectUrl && isUrlNotJavascriptProtocol(url?.redirectUrl)) {
             window.location = `${url.redirectUrl}?accountId=${accountId}`;
         } else {
-            setLinkdropAmount(this.state.balance);
+            setLinkdropAmount(this.state.keyInfo.yoctoNEAR);
             redirectTo('/');
         }
     }
 
+    handleOffboardTrialAccount = async () => {
+        const { fundingContract, fundingKey, mainLoader, history, claimingDrop } = this.props;
+        const { keyInfo } = this.state;
+
+        
+        this.setState({
+            accountId: fundingContract,
+            fundingAmount: keyInfo?.yoctoNEAR || '0',
+        })
+
+        console.log('this.state create account: ', this.state);
+        console.log('this.props create account: ', this.props);
+
+        let queryString = `?fundingOptions=${encodeURIComponent(JSON.stringify({ fundingContract, fundingKey, fundingAmount: keyInfo?.yoctoNEAR }))}`;
+        Mixpanel.track('CA Click create account button');
+        this.props.history.push(`/set-recovery/${fundingContract}${queryString}`);
+    }
+
     render() {
         const { fundingContract, fundingKey, accountId, mainLoader, history, claimingDrop } = this.props;
-        const { balance, invalidNearDrop } = this.state;
-        const fundingAmount = balance;
+        const { keyInfo, invalidLinkdrop } = this.state;
+        const fundingAmount = keyInfo?.yoctoNEAR;
 
-        if (!invalidNearDrop) {
+        if (!invalidLinkdrop) {
             const params = parse(history.location.search);
             const redirectUrl = params.redirectUrl ? `&redirectUrl=${encodeURIComponent(params.redirectUrl)}` : '';
 
@@ -120,10 +164,10 @@ class LinkdropLanding extends Component {
                 <StyledContainer className='xs-centered'>
                     <NearGiftIcons/>
                     <h3><Translate id='linkdropLanding.title'/></h3>
-                    <div className='near-balance'>
+                    <div className='near-keyInfo'>
                         <Balance
                             data-test-id="linkdropBalanceAmount"
-                            amount={balance}
+                            amount={fundingAmount}
                         />
                     </div>
                     <div className='desc'>
@@ -135,7 +179,7 @@ class LinkdropLanding extends Component {
                             data-test-id="linkdropAccountDropdown"
                         />
                     ) : null}
-                    {accountId ? (
+                    {/* {accountId ? (
                         <FormButton
                             onClick={this.handleClaimNearDrop}
                             sending={claimingDrop}
@@ -152,8 +196,8 @@ class LinkdropLanding extends Component {
                         >
                             <Translate id='linkdropLanding.ctaLogin'/>
                         </FormButton>
-                    )}
-                    <div className='or'><Translate id='linkdropLanding.or'/></div>
+                    )} */}
+                    {/* <div className='or'><Translate id='linkdropLanding.or'/></div> */}
                     <FormButton
                         data-test-id="linkdropCreateAccountToClaim"
                         color="gray-blue"
@@ -161,6 +205,17 @@ class LinkdropLanding extends Component {
                         linkTo={`/create/${fundingContract}/${fundingKey}`}
                     >
                         <Translate id='linkdropLanding.ctaNew'/>
+                    </FormButton>
+                    <FormButton
+                        data-test-id="linkdropCreateAccountToClaim"
+                        disabled={claimingDrop}
+                        onClick={this.handleOffboardTrialAccount}
+                        sending={claimingDrop}
+                        disabled={mainLoader}
+                        sendingString='linkdropLanding.claiming'
+                        data-test-id="linkdropClaimToExistingAccount"
+                    >
+                        <Translate id='linkdropLanding.ctaAccount'/>
                     </FormButton>
                 </StyledContainer>
             );
