@@ -64,6 +64,19 @@ const SetupSeedPhraseVerify = (
     },
     ref
 ) => {
+
+    console.log(`handleStartOver: ${JSON.stringify(handleStartOver)}`);
+    console.log(`hasSeedPhraseRecovery: ${JSON.stringify(hasSeedPhraseRecovery)}`);
+    console.log(`isLinkDrop: ${JSON.stringify(isLinkDrop)}`);
+    console.log(`onSubmit: ${JSON.stringify(onSubmit)}`);
+    console.log(`isNewAccount: ${JSON.stringify(isNewAccount)}`);
+    console.log(`onRecaptchaChange: ${JSON.stringify(onRecaptchaChange)}`);
+    console.log(`localAlert: ${JSON.stringify(localAlert)}`);
+    console.log(`mainLoader: ${JSON.stringify(mainLoader)}`);
+    console.log(`handleChangeWord: ${JSON.stringify(handleChangeWord)}`);
+    console.log(`wordId: ${JSON.stringify(wordId)}`);
+    console.log(`enterWord: ${JSON.stringify(enterWord)}`);
+    
     debugLog('Re-rendering', { isNewAccount: isNewAccount });
     const recaptchaRef = useRef(null);
     const [recaptchaToken, setRecaptchaToken] = useState();

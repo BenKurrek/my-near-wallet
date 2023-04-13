@@ -46,6 +46,7 @@ class SetupRecoveryMethod extends Component {
     }
 
     async componentDidMount() {
+        console.log('this.props in recovery method: ', this.props);
         const { router } = this.props;
         const { method } = router.location;
 

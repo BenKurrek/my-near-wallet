@@ -1,6 +1,8 @@
 import { keyAccountConfirmed, keyStakingAccountSelected, keyReleaseNotesModalClosed } from './wallet';
 
 export const setAccountConfirmed = (accountId, confirmed) => {
+    console.log(`confirmed: ${JSON.stringify(confirmed)}`);
+    console.log(`accountId: ${JSON.stringify(accountId)}`);
     localStorage.setItem(keyAccountConfirmed(accountId), confirmed);
 };
 

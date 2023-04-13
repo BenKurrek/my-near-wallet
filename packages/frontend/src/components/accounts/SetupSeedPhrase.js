@@ -60,7 +60,7 @@ class SetupSeedPhrase extends Component {
         const recoveryKeyPair = KeyPair.fromString(secretKey);
         const wordId = Math.floor(Math.random() * 12);
 
-        const isNewAccount = await checkIsNew(accountId);
+        const isNewAccount = true;//await checkIsNew(accountId);
 
         if (!isNewAccount) {
             fetchRecoveryMethods({ accountId });
@@ -221,6 +221,8 @@ class SetupSeedPhrase extends Component {
         const { recoveryMethods, recoveryMethodsLoader, history, accountId, location } = this.props;
         const hasSeedPhraseRecovery = recoveryMethodsLoader || recoveryMethods.filter((m) => m.kind === 'phrase').length > 0;
         const { seedPhrase, enterWord, wordId, submitting, localAlert, isNewAccount, successSnackbar } = this.state;
+        console.log('this.state seedphrase: ', this.state);
+        
 
         return (
             <Translate>
@@ -322,6 +324,8 @@ const mapDispatchToProps = {
 };
 
 const mapStateToProps = (state, { match }) => {
+    console.log('match: ', match);
+    console.log('state in mapping: ', state);
     const { accountId } = match.params;
 
     return {
