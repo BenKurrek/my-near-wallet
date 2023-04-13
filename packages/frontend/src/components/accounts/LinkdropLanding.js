@@ -26,7 +26,7 @@ const StyledContainer = styled(Container)`
     align-items: center;
     text-align: center;
 
-    .near-keyInfo {
+    .near-balance {
         color: #0072CE;
         font-weight: 600;
         border: 1px solid #D6EDFF;
@@ -105,17 +105,9 @@ class LinkdropLanding extends Component {
                 console.log('fundingKey: ', fundingKey)
                 const returnedKeyInfo = await checkNearDropBalance(fundingContract, fundingKey);
                 console.log('returnedKeyInfo: ', returnedKeyInfo)
-
-                let actualInfo = {
-                    required_gas: '100000000000000',
-                    yoctoNEAR: '0',
-                    trial_data: {
-                        exit: true
-                    }
-                }
-
+                
                 this.setState({
-                    keyInfo: actualInfo
+                    keyInfo: returnedKeyInfo
                 })
             },
             () => this.setState({ invalidLinkdrop: true })
@@ -164,7 +156,7 @@ class LinkdropLanding extends Component {
                 <StyledContainer className='xs-centered'>
                     <NearGiftIcons/>
                     <h3><Translate id='linkdropLanding.title'/></h3>
-                    <div className='near-keyInfo'>
+                    <div className='near-balance'>
                         <Balance
                             data-test-id="linkdropBalanceAmount"
                             amount={fundingAmount}
